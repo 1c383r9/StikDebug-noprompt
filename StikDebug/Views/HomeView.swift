@@ -10,13 +10,11 @@ import SwiftUI
 struct HomeView: View {
     @AppStorage("autoQuitAfterEnablingJIT") private var doAutoQuitAfterEnablingJIT = false
     @AppStorage("bundleID") private var bundleID: String = ""
-    @AppStorage(UserDefaults.Keys.confirmExternalJITRequests) private var confirmExternalJITRequests = true
 
     @State private var hasAppeared = false
     @State private var pendingJITEnableConfiguration: JITEnableConfiguration?
     @State private var isShowingPairingFilePicker = false
     @State private var debugFeedback: DebugFeedback?
-    @State private var pendingExternalURLAction: HomeExternalAction?
     @State private var pendingLiveContainerApp: JITWarningApp?
     @State private var pendingStikDebugApp: JITWarningApp?
     @State private var scriptRunModel: RunJSViewModel?
@@ -54,29 +52,6 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .intentJSScriptReady), perform: handleScriptReadyNotification)
         .onOpenURL { url in
             handleExternalURL(url)
-        }
-        .confirmationDialog(
-            pendingExternalURLAction?.title ?? "External Request",
-            isPresented: Binding(
-                get: { pendingExternalURLAction != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        pendingExternalURLAction = nil
-                    }
-                }
-            ),
-            titleVisibility: .visible,
-            presenting: pendingExternalURLAction
-        ) { action in
-            Button(action.confirmationTitle, role: action.role) {
-                performExternalURLAction(action)
-                pendingExternalURLAction = nil
-            }
-            Button("Cancel", role: .cancel) {
-                pendingExternalURLAction = nil
-            }
-        } message: { action in
-            Text(action.message)
         }
         .alert(
             "Enable JIT for LiveContainer?",
@@ -235,19 +210,14 @@ struct HomeView: View {
                 config.scriptData = scriptInfo.data
                 config.scriptName = scriptInfo.name
             }
-            let action = HomeExternalAction.enableJIT(config)
-            if confirmExternalJITRequests {
-                pendingExternalURLAction = action
-            } else {
-                performExternalURLAction(action)
-            }
+            performExternalURLAction(.enableJIT(config))
         case "kill-process":
             if let pidStr = queryValue(["pid"], in: components), let pid = Int(pidStr) {
-                pendingExternalURLAction = .killProcess(pid)
+                performExternalURLAction(.killProcess(pid))
             }
         case "launch-app":
             if let bundleId = queryValue(["bundle-id", "bundleID", "bundle_id", "bundleId"], in: components) {
-                pendingExternalURLAction = .launchApp(bundleId)
+                performExternalURLAction(.launchApp(bundleId))
             }
         default:
             break

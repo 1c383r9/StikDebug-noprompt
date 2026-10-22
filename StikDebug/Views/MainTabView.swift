@@ -9,52 +9,10 @@ import SwiftUI
 import Foundation
 import CoreLocation
 
-private enum ExternalLocationAction: Identifiable {
-    case simulate(URL, Double, Double)
-    case clear
-
-    var id: String {
-        switch self {
-        case .simulate(let url, _, _):
-            return "simulate-\(url.absoluteString)"
-        case .clear:
-            return "clear-location"
-        }
-    }
-
-    var title: String {
-        switch self {
-        case .simulate:
-            return "Simulate Location?"
-        case .clear:
-            return "Clear Location?"
-        }
-    }
-
-    var message: String {
-        switch self {
-        case .simulate(_, let latitude, let longitude):
-            return String(format: "An external link wants to set the simulated location to %.6f, %.6f.", latitude, longitude)
-        case .clear:
-            return "An external link wants to clear the simulated location."
-        }
-    }
-
-    var confirmationTitle: String {
-        switch self {
-        case .simulate:
-            return "Set Location"
-        case .clear:
-            return "Clear Location"
-        }
-    }
-}
-
 struct MainTabView: View {
     @AppStorage("primaryTabSelection") private var selection: String = AppFeature.home.id
     @State private var detachedFeature: AppFeature?
     @State private var didSetInitialHome = false
-    @State private var pendingLocationAction: ExternalLocationAction?
 
     var body: some View {
         ZStack {
@@ -76,29 +34,6 @@ struct MainTabView: View {
             }
             .onOpenURL { url in
                 handleURL(url)
-            }
-            .confirmationDialog(
-                pendingLocationAction?.title ?? "External Location Request",
-                isPresented: Binding(
-                    get: { pendingLocationAction != nil },
-                    set: { isPresented in
-                        if !isPresented {
-                            pendingLocationAction = nil
-                        }
-                    }
-                ),
-                titleVisibility: .visible,
-                presenting: pendingLocationAction
-            ) { action in
-                Button(action.confirmationTitle, role: .destructive) {
-                    performLocationAction(action)
-                    pendingLocationAction = nil
-                }
-                Button("Cancel", role: .cancel) {
-                    pendingLocationAction = nil
-                }
-            } message: { action in
-                Text(action.message)
             }
             .sheet(item: $detachedFeature) { feature in
                 NavigationStack {
@@ -128,15 +63,15 @@ struct MainTabView: View {
 
         switch host {
         case "simulate-location", "set-location":
-            confirmSimulatedLocation(from: url)
+            simulateLocation(from: url)
         case "location", "location-simulation":
             if coordinate(from: url) == nil {
                 openFeature(id: AppFeature.location.id)
             } else {
-                confirmSimulatedLocation(from: url)
+                simulateLocation(from: url)
             }
         case "clear-location", "stop-location":
-            pendingLocationAction = .clear
+            clearSimulatedLocation()
         default:
             break
         }
@@ -151,37 +86,6 @@ struct MainTabView: View {
             selection = feature.id
         } else {
             detachedFeature = feature
-        }
-    }
-
-    private func confirmSimulatedLocation(from url: URL) {
-        guard let coordinate = coordinate(from: url) else {
-            showAlert(
-                title: "Invalid Location URL",
-                message: "Use stikdebug://simulate-location?lat=37.3349&lon=-122.0090",
-                showOk: true
-            )
-            return
-        }
-
-        guard coordinateIsValid(latitude: coordinate.latitude, longitude: coordinate.longitude) else {
-            showAlert(
-                title: "Invalid Coordinates",
-                message: "Latitude must be between -90 and 90. Longitude must be between -180 and 180.",
-                showOk: true
-            )
-            return
-        }
-
-        pendingLocationAction = .simulate(url, coordinate.latitude, coordinate.longitude)
-    }
-
-    private func performLocationAction(_ action: ExternalLocationAction) {
-        switch action {
-        case .simulate(let url, _, _):
-            simulateLocation(from: url)
-        case .clear:
-            clearSimulatedLocation()
         }
     }
 

@@ -22,7 +22,6 @@ enum AppBootstrapper {
         UserDefaults.standard.register(defaults: [
             "enableAdvancedOptions": enableAdvancedOptions,
             UserDefaults.Keys.txmOverride: false,
-            UserDefaults.Keys.confirmExternalJITRequests: true,
             "keepAliveAudio": true,
             "keepAliveLocation": true
         ])

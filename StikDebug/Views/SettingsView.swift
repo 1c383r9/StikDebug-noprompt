@@ -15,7 +15,6 @@ private enum SettingsLinks {
 
 struct SettingsView: View {
     @AppStorage(UserDefaults.Keys.txmOverride) private var overrideTXMDetection = false
-    @AppStorage(UserDefaults.Keys.confirmExternalJITRequests) private var confirmExternalJITRequests = true
     @AppStorage("keepAliveAudio") private var keepAliveAudio = true
     @AppStorage("keepAliveLocation") private var keepAliveLocation = true
     @AppStorage(UserDefaults.Keys.targetDeviceIP) private var targetDeviceIP = DeviceConnectionContext.defaultTargetIPAddress
@@ -124,14 +123,6 @@ struct SettingsView: View {
                 }
 
                 Section("Behavior") {
-                    Toggle(isOn: $confirmExternalJITRequests) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Confirm JIT Links")
-                            Text("Ask before external links enable JIT or run scripts.")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-
                     Toggle(isOn: $overrideTXMDetection) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Always Run Scripts")
