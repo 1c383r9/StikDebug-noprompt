@@ -1,3 +1,5 @@
+Original version without the request prompt when an external link is passed, e.g. location simulation via schema , JIT activities.
+---
 <div align="center">
    <img width="217" height="217" src="/assets/StikDebug.png" alt="Logo">
 </div>
