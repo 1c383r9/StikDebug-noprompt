@@ -8,12 +8,13 @@ import UIKit
 
 private enum SettingsLinks {
     static let githubStars = URL(string: "https://github.com/StikDebug/StikDebug")!
-    static let pairingFileGuide = URL(string: "https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md")!
+    static let pairingFileGuide = URL(string: "https://github.com/StikDebug/StikDebug/blob/main/PAIRING.md")!
     static let localDevVPN = URL(string: "https://apps.apple.com/us/app/localdevvpn/id6755608044")!
     static let discord = URL(string: "https://discord.gg/qahjXNTDwS")!
 }
 
 struct SettingsView: View {
+    @StateObject private var onDevicePairing = OnDevicePairingService.shared
     @AppStorage(UserDefaults.Keys.txmOverride) private var overrideTXMDetection = false
     @AppStorage("keepAliveAudio") private var keepAliveAudio = true
     @AppStorage("keepAliveLocation") private var keepAliveLocation = true
@@ -70,6 +71,12 @@ struct SettingsView: View {
                 }
 
                 Section("Pairing File") {
+                    NavigationLink {
+                        OnDevicePairingView(service: onDevicePairing)
+                    } label: {
+                        Label("Pair a Device", systemImage: "iphone.and.arrow.forward")
+                    }
+
                     Button {
                         isShowingPairingFilePicker = true
                     } label: {
@@ -185,8 +192,8 @@ struct SettingsView: View {
                     Link(destination: SettingsLinks.pairingFileGuide) {
                         Label("Pairing File Guide", systemImage: "questionmark.circle")
                     }
-                    Link(destination: SettingsLinks.localDevVPN) {
-                        Label("Download LocalDevVPN", systemImage: "arrow.down.circle")
+                    Button(action: connectLocalDevVPN) {
+                        Label("Connect LocalDevVPN", systemImage: "network")
                     }
                     Link(destination: SettingsLinks.discord) {
                         Label("Discord Support", systemImage: "bubble.left.and.bubble.right")
@@ -208,10 +215,12 @@ struct SettingsView: View {
             targetDeviceIPInput = targetDeviceIP
             remotePairingPortInput = remotePairingPortOverride
         }
-        .task {
+        .task(id: targetDeviceIP) {
+            automaticPortPlaceholder = "Discovering…"
             let result = await Task.detached {
                 RemotePairingPortResolver.discover()
             }.value
+            guard !Task.isCancelled else { return }
             automaticPortPlaceholder = result.source == "Bonjour"
                 ? "Bonjour (\(result.port))"
                 : "Fallback (\(result.port))"
@@ -304,6 +313,20 @@ struct SettingsView: View {
     }
 
     // MARK: - Business Logic
+
+    private func connectLocalDevVPN() {
+        let callbackScheme = ProcessInfo.processInfo.environment["LC_HOME_PATH"] != nil
+            ? "livecontainer"
+            : "stikdebug"
+        guard let url = URL(string: "localdevvpn://enable?scheme=\(callbackScheme)") else { return }
+        UIApplication.shared.open(url, options: [:]) { opened in
+            if !opened {
+                DispatchQueue.main.async {
+                    UIApplication.shared.open(SettingsLinks.localDevVPN)
+                }
+            }
+        }
+    }
 
     private func openAppFolder() {
         guard let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }

@@ -46,6 +46,8 @@ Original version without the request prompt when an external link is passed, e.g
 | 17.4 – 18.x              | Fully supported      | Stable                                                                |
 | 26.0+              | Supported            | Limited App Availability (Developers need to update their apps to work.) |
 
+See [Officially Supported Apps](SUPPORTED_APPS.md) for the apps supported by the StikDebug team and their bundled scripts.
+
 ## How to Enable JIT
 
 StikDebug enables **JIT** for sideloaded apps on iOS 17.4+ without needing a computer after the initial pairing setup.
@@ -58,7 +60,7 @@ StikDebug enables **JIT** for sideloaded apps on iOS 17.4+ without needing a com
 
 ### Steps
 1. **Obtain a pairing file**  
-   - Detailed guide: [Pairing File Instructions](https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md) (or ask in Discord).
+   - Detailed guide: [Pairing File Instructions](PAIRING.md) (or ask in Discord).
 
 2. **Set up VPN**  
    - Launch LocalDevVPN and enable the VPN.
